@@ -18,6 +18,11 @@ $(function() {
     var $divOnline = $('#online');
 
     //io(<Namespace>)
+
+    //Websocket Connect
+    var socket = io.connect('http://localhost:3000/channel1',
+        {upgrade:false, transports:['websocket']});
+    //Polling Connect
     var socket = io.connect('http://localhost:3000/channel1');
 //    $('#run').text("test");
     $('form').submit(function() {

@@ -1,8 +1,13 @@
 /**
  * Created by benson_liao on 2015/8/28.
  * Socket against RFC 6455
+ * 1. Client送出Request，Request Header裡面會有handshake需要的資訊。如果資訊驗證有問題，Server就會中斷連線
+ * 2. Server收到Request後，會送出一個Response Header，讓Client根據裡面的資訊做驗證
+ * 3. Client驗證OK，之後就繼續連線，Client可以透過這個連線送資料給Server，Server也可以透過這個連線送資料給Client，任何一方都可以透過這個連線送資料
+ * 4. Client驗證有錯，就中斷連線
  */
 var io = require('socket.io');
+var _server;
 var eventEmitter = require('events').EventEmitter;
 var emitter;
 var _nsp = [];
@@ -25,13 +30,17 @@ function NetConnection() {
 };
 /** 監聽連線 **/
 NetConnection.prototype.listenWithServer = function(server) {
+    _server = server;
     io = io.listen(server);
+
+    //io.set('transports', ['websocket']);
 };
 
 NetConnection.prototype.add = function (path) {
     console.log("add" + path);
     if(_nsp[path] != null) return;
     _nsp[path] = io.of(path).on("connection", connection);
+
     return _nsp[path];
 };
 
@@ -97,6 +106,8 @@ var connection =  function (client_socket) {
     //client_socket.nsp.to("room1").emit('chat message', "room1" + ":hello!!");
 
 
+
+
     client_socket.on('disconnect', disconnect);
 
     client_socket.on('chat message',sendMessage1);
@@ -108,3 +119,4 @@ var connection =  function (client_socket) {
     client_socket.on('getClients', getOnlieUsers);
 
 };
+
