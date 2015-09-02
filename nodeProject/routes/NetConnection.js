@@ -1,12 +1,13 @@
 /**
  * Created by benson_liao on 2015/8/28.
+ * Socket against RFC 6455
  */
 var io = require('socket.io');
 var eventEmitter = require('events').EventEmitter;
 var emitter;
 var _nsp = [];
 // ----------------------------------------------- //
-//   Deffine
+//             Constant Variables                  //
 // ----------------------------------------------- //
 const SocketEvent = {
     CONNECT: "connection",
@@ -15,13 +16,14 @@ const SocketEvent = {
 
 module.exports = exports = new NetConnection();
 
+/** 建立連線機制 **/
 function NetConnection() {
-
+    //自訂事件
     emitter = new eventEmitter();
 
     console.log("netConnection start");
 };
-
+/** 監聽連線 **/
 NetConnection.prototype.listenWithServer = function(server) {
     io = io.listen(server);
 };
@@ -43,7 +45,7 @@ NetConnection.prototype.onConnect = function (callback) {
 NetConnection.prototype.onDisconnect = function (callback) {
     emitter.on(SocketEvent.DISCONNECT, callback);
 };
-
+/** 成功建立連線 **/
 var connection =  function (client_socket) {
 
     console.log("[Status] NetConnection connected!");
@@ -56,7 +58,7 @@ var connection =  function (client_socket) {
     };
 
     var sendMessage1 = function(msg) {
-        console.log('[Status] Client message1:' + client_socket.nsp);
+        console.info('[Status] Client : %s' , client_socket.username);
 
         client_socket.nsp.emit('chat message', {
             username:client_socket.username,
