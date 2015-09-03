@@ -9,7 +9,8 @@
 var io = require('socket.io');
 var _server;
 var eventEmitter = require('events').EventEmitter;
-var emitter;
+
+var emitter = new eventEmitter(); // 自訂事件
 var _nsp = [];
 // ----------------------------------------------- //
 //             Constant Variables                  //
@@ -18,13 +19,14 @@ const SocketEvent = {
     CONNECT: "connection",
     DISCONNECT: "disconnect"
 };
-
+NetConnection.prototype.SocketEvent = SocketEvent;
+// ----------------------------------------------- //
+//                 Model Module                    //
+// ----------------------------------------------- //
 module.exports = exports = new NetConnection();
 
-/** 建立連線機制 **/
+/** 連線機制 **/
 function NetConnection() {
-    //自訂事件
-    emitter = new eventEmitter();
 
     console.log("netConnection start");
 };
@@ -35,7 +37,7 @@ NetConnection.prototype.listenWithServer = function(server) {
 
     //io.set('transports', ['websocket']);
 };
-
+/** 新增新增Path(endPoint) **/
 NetConnection.prototype.add = function (path) {
     console.log("add" + path);
     if(_nsp[path] != null) return;
@@ -43,14 +45,14 @@ NetConnection.prototype.add = function (path) {
 
     return _nsp[path];
 };
-
+/** 確認是否連線狀態 **/
 NetConnection.prototype.onConnect = function (callback) {
     emitter.on(SocketEvent.CONNECT, callback); // addEventlistener
     //emitter.addListener(SocketEvent.CONNECT, callback);
     //emitter.removeListener(SocketEvent.CONNECT,callback);
     return this;
 };
-
+/** 確認是否離連線狀態 **/
 NetConnection.prototype.onDisconnect = function (callback) {
     emitter.on(SocketEvent.DISCONNECT, callback);
 };
@@ -65,7 +67,7 @@ var connection =  function (client_socket) {
         console.log("[Status] disconnect!");
         getOnlieUsers();
     };
-
+    /** send not add room messages **/
     var sendMessage1 = function(msg) {
         console.info('[Status] Client : %s' , client_socket.username);
 
@@ -74,7 +76,7 @@ var connection =  function (client_socket) {
             message:msg
         });
     };
-
+    /** add User nickname **/
     var addUserHandle = function (username) {
         client_socket.username = username;
     };
@@ -94,6 +96,15 @@ var connection =  function (client_socket) {
         client_socket.removeListener('chat message',sendMessage1);
         client_socket.on('chat message',roomSendMessage);
     };
+
+    /** Leave Room **/
+    var leaveRoom = function (room) {
+        client_socket.leave(room);
+        client_socket.room = null;
+        client_socket.removeListener('chat message',roomSendMessage);
+        client_socket.on('chat message',sendMessage1);
+    }
+
     /** Send Message **/
     var roomSendMessage = function (msg) {
         console.log('[Info]['+ client_socket.room +'] Client message:' + msg);
@@ -114,7 +125,9 @@ var connection =  function (client_socket) {
 
     client_socket.on('addUser', addUserHandle);
 
-    client_socket.on('joinRoom',joinRoom);
+    client_socket.on('joinRoom', joinRoom);
+
+    client_socket.on('leaveRoom', leaveRoom);
 
     client_socket.on('getClients', getOnlieUsers);
 
