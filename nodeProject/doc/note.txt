@@ -1,0 +1,9 @@
+#Standard - RFC 6455 Support
+1.Chrome:	16
+2.FireFox: 	11.0
+3.IE:		10
+4.Opera:	12.10
+5.Safari:	6.0
+
+#
+

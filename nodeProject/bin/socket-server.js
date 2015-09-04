@@ -1,5 +1,5 @@
 //------------------------------------------------
-var debug = require('debug')('nodePorject:log');
+var debug = require('debug')('nodeProject:log');
 //------------------------------------------------
 
 var express = require('express');
@@ -13,20 +13,21 @@ var httpd = require('http').createServer(app);
 //                           Socket.io                           //
 //===============================================================//
 var netConnection = require('../routes/NetConnection'); // 1.require class method
-netConnection.listenWithServer(httpd); //register listen server
+netConnection.listenWithServer(httpd); // register listen server
 var chat1 = netConnection.add("/channel1"); // add socket path one
 var chat2 = netConnection.add("/channel2"); // add socket path two
 
 netConnection.onConnect(function(client_socket){  });
 
 chat1.on("connection",function(client){ }); // addEventLister
-//---------------------------------------------------------------
 
+//---------------------------------------------------------------
 
 // only serve static files from
 app.use(express.static(__viewsname + '/public/javascripts'));
 
 app.use("/css", express.static(__viewsname + '/public/stylesheets'));
+
 //---------------------------------------------------------------
 
 console.log("socket-server:start");

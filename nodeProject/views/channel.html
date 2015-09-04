@@ -1,7 +1,9 @@
 <!doctype html>
 <html>
 <head>
-    <title>Socket.IO chat</title>
+    <title>Socket.IO Chat Usage Websocket</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link charset="utf-8" href="/css/main.css" rel="stylesheet" type="text/css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-size: medium;font-family: 'Open Sans Condensed',Consolas, Menlo, Monaco, monospace}
         body { font: 13px Helvetica, Arial; background-color: #f3f3f3;}
@@ -68,13 +70,13 @@
 <p id="run">init...</p>
 
 <div id="titleBar">
-    <!-- ­pºâ½u¤W¤H¼Æ -->
+    <!-- è¨ˆç®—ç·šä¸Šäººæ•¸ -->
     <span id="online_title" >online : </span>
     <span id="online" >0</span>
 
     <span class="addNameForm">
         <input id="usernameInput" placeholder="Nickname" type="text" value="" required="">
-        <button id="userNameButton" >Singe in</button><!--Subscribe-->
+        <button id="userNameButton" >Rename</button><!--Subscribe-->
     </span>
     <span id="addRoomForm">
         <input id="roomInput" placeholder="add your room name..." type="text" value="" required="">
@@ -86,7 +88,8 @@
 <form action="">
     <input id="m" autocomplete="off" /><button>Send</button>
 </form>
-
+<!-- è¨Šæ¯æ¡† -->
+<section id="messages2"></section>
 <script type="application/javascript" src="/socket.io/socket.io.js"></script>
 
 </body>

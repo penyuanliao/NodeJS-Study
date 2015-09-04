@@ -1,16 +1,17 @@
 <!doctype html>
 <html>
 <head>
-    <title>Socket.IO chat</title>
+    <title>Socket.IO Chat Usage Polling</title>
+    <link charset="utf-8" href="/css/main.css" rel="stylesheet" type="text/css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-size: medium;font-family: 'Open Sans Condensed',Consolas, Menlo, Monaco, monospace}
         body { font: 13px Helvetica, Arial; background-color: #f3f3f3;}
         form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
         form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
         form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
         #messages { list-style-type: none; margin: 0; padding: 0; }
-        #messages li { padding: 5px 10px; }
-        #messages li:nth-child(odd) { background: #eee; }
+        #messages li { padding: 5px 10px; background: #656565; color: #fff;}
+        #messages li:nth-child(odd) { background: #414141;}
         button {
             border-style: solid;
             border-width: 0;
@@ -18,19 +19,21 @@
             font-family: inherit;
             font-weight: 700;
             line-height: 1;
-            margin: 0 0 1.25em;
+            margin: 0 0 0;
             position: relative;
             text-decoration: none;
             text-align: center;
             display: inline-block;
-            padding-top: 1em;
+            padding-top: 0.5em;
             padding-right: 2em;
-            padding-bottom: 1.0625em;
+            padding-bottom: 0.8em;
             padding-left: 2em;
             font-size: 1em;
             background-color: #1c94c6;
             border-color: #1779a2;
             color: #fff;
+            border-radius: 6px;
+            font-size: 18px;
         }
         input  {
             -webkit-box-flex: 1;
@@ -40,9 +43,22 @@
             background: #fff;
             border-radius-top-left: 2px;
             border-radius-bottom-left: 2px;
-            border: 0;
-            margin: 0;
+            border-width: 1px;
+            margin-top: 2px;
             height: 38px;
+        }
+        #online { font-size: 20px; font-weight: 700; }
+        #titleBar {
+
+
+            height: 44px;
+            left: 0;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 10001;
+            background: #ffffff;
+            box-shadow: 0px 3px 0px 0px rgba(0, 0, 0, 0.05);
         }
     </style>
     <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
@@ -51,29 +67,29 @@
 <body>
 
 <p id="run">init...</p>
-<li>
-    <div class="channel">
-        <h3 class="title">Change a Channel?</h3>
-        <select class="nspChannel">
-            <option value="Channel1">Channel1</option>
-            <option value="Channel1">Channel1</option>
-            <option value="Channel1">Channel1</option>
-            <option value="Channel1">Channel1</option>
-        </select>
-    </div>
-    <div class="addNameForm">
-        <h3 class="title">What's your nickname?</h3>
-        <input id="usernameInput" placeholder="Nickname" type="text" value="" required="">
-        <button id="userNameButton" >Subscribe</button>
-    </div>
-</li>
 
+<div id="titleBar">
+    <!-- 計算線上人數 -->
+    <span id="online_title" >online : </span>
+    <span id="online" >0</span>
+
+    <span class="addNameForm">
+        <input id="usernameInput" placeholder="Nickname" type="text" value="" required="">
+        <button id="userNameButton" >Rename</button><!--Subscribe-->
+    </span>
+    <span id="addRoomForm">
+        <input id="roomInput" placeholder="add your room name..." type="text" value="" required="">
+        <button id="joinRoomButton">Join</button>
+    </span>
+</div>
+<br><br>
 <ul id="messages"></ul>
 <form action="">
     <input id="m" autocomplete="off" /><button>Send</button>
 </form>
-
+<!-- 訊息框 -->
+<section id="messages2">
+</section>
 <script type="application/javascript" src="/socket.io/socket.io.js"></script>
-
 </body>
 </html>

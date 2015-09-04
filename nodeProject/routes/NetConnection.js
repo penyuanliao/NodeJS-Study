@@ -27,7 +27,6 @@ module.exports = exports = new NetConnection();
 
 /** 連線機制 **/
 function NetConnection() {
-
     console.log("netConnection start");
 };
 /** 監聽連線 **/
@@ -36,6 +35,8 @@ NetConnection.prototype.listenWithServer = function(server) {
     io = io.listen(server);
 
     //io.set('transports', ['websocket']);
+    // [xhr-multipart] latest version is disabled.
+    //websocket, flashsocket, htmlfile, xhr-polling, jsonp-polling, polling
 };
 /** 新增新增Path(endPoint) **/
 NetConnection.prototype.add = function (path) {
