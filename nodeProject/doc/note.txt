@@ -5,5 +5,8 @@
 4.Opera:	12.10
 5.Safari:	6.0
 
-#
+mozilla
+#https://github.com/websockets/ws
+
+#https://github.com/theturtle32/WebSocket-Node
 
