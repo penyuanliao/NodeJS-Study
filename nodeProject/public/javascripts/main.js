@@ -20,7 +20,8 @@ $(function() {
     //io(<Namespace>)
 
     // ---- Websocket Connect ---- //
-    var socket = io.connect('http://192.168.152.233:3000/channel1',
+
+    var socket = io.connect('http://127.0.0.1:8080/channel1',
         {upgrade:false, transports:['websocket']});
     // ---- Polling Connect ---- //
     //var socket = io.connect('http://192.168.152.233:3000/channel1');
