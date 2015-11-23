@@ -29,16 +29,37 @@ Headers.prototype.readHeaders = function (chunk) {
     var data = chunk.toString('utf8');
     var lines = data.split("\r\n");
     var headers = {};
-    for (var i = 0; i < lines.length; i++) {
-        var _value = lines[i].split(": ");
-        headers[_value[0]] = _value[1];
+    var i = lines.length;
+
+    if (lines.length === 1) return false;
+
+    //Check is GET HTTP 1.1
+    var reqMethod = lines[0].toString().match(/^GET (.+) HTTP\/\d\.\d$/i);
+
+    if (lines == null) return false;
+
+    //for (var i = 0; i < lines.length; i++) {
+    //    var _value = lines[i].split(": ");
+    //    headers[_value[0]] = _value[1];
+    //};
+
+    while(--i > 0) {
+
+        if (lines[i] === null | lines[i] === '') continue;
+
+        var  match = lines[i].toString().match(/^([a-z-A-Z-]+): (.+)/i);
+
+        if (match === null) continue;
+
+        headers[match[1].toLowerCase()] = match[2];
     };
     console.log(this.name);
     return headers;
 };
 Headers.prototype.writeHeaders = function (reqHeaders) {
 
-    var sKey = crypto.createHash("sha1").update(reqHeaders["Sec-WebSocket-Key"] + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").digest("base64");
+
+    var sKey = crypto.createHash("sha1").update(reqHeaders["sec-websocket-key"] + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").digest("base64");
     var resHeaders = [
         'HTTP/1.1 101 Switching Protocols',
         'Upgrade: websocket',
@@ -130,7 +151,7 @@ Protocols.prototype.readFraming = function (buffer) {
     //set final buffer size
     buffer = buffer.slice(protocol.start + len);
     protocol.msg = protocol.payload.toString();
-    console.log(protocol.msg);
+    //console.log(protocol.msg);
     // Proceeds to frame processing
     return protocol;
 };
