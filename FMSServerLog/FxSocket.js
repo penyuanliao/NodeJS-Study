@@ -8,7 +8,7 @@ var FxSocket = function(socket)
 {
     this.socket = socket;
     socket.name = socket.remoteAddress + "\:" + socket.remotePort;
-    this.mode = 'nil';
+    this.mode = '';
 };
 
 FxSocket.prototype.handeshake = function (chunk) {

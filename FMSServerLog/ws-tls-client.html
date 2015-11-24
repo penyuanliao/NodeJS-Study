@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+<head>
+    <title>Socket.IO Chat Usage Websocket</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <!----><script type="application/javascript">
+    $(document).ready(function () {
+        var wsURL = 'wss://127.0.0.1:8081';
+        var ws = new WebSocket(wsURL);
+        ws.onopen = function (evt){
+            console.log('websocket on connected.');
+        };
+        ws.onclose = function (evt) {
+            console.log('websocket on disconnect.');
+        };
+        ws.onmessage = function (evt) {
+            console.log('data connected.');
+        };
+    });
+    </script>
+    
+</head>
+<body>
+
+</body>
+</html>

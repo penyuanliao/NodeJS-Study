@@ -64,20 +64,34 @@ function FxConnection(port, option){
         console.log('LOG::SOCKET ERROR');
     };
 }
+// only accepts secure connections
+FxConnection.prototype.FxTLSConnection = function (option){
 
-function FxTLSConnection(option){
-
+    var loadKey = fs.readFileSync('keys/skey.pem');
+    var loadcert = fs.readFileSync('keys/scert.pem');
     var options = {
-        key : fs.readFileSync('key.pem'),
-        cert: fs.readFileSync('cert.pem')
+        key : loadKey,
+        cert: loadcert
     };
 
-    tls.createServer(option, function (socket) {
+    var self = this.self;
+
+    tls.createServer(options, function (socket) {
         console.log('TLS Client connection established.');
-        socket.on('data', function (chunk) {
-            console.log('Data received %s', chunk);
+
+        // Set listeners
+        socket.on('readable', function () {
+            console.log('TRACE :: Readable');
+
         });
-    });
+
+        var client = new fxSocket(socket);
+        socket.on('data', function (data) {
+            console.log('::TRACE DATA ON STL CLIENT');
+            sockDidData(client, data, self);
+        });
+
+    }).listen(8081);
 
 }
 
@@ -133,6 +147,7 @@ module.exports = exports = FxConnection;
 
 
 var s = new FxConnection(8080);
+s.FxTLSConnection(null);
 s.on('connection', function (socket) {
     console.log('clients:',socket.name);
 });
