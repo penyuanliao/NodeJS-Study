@@ -1,19 +1,29 @@
 /**
- * Created by benson_liao on 2015/11/20.
+ * Created by Benson.Liao on 2015/11/20.
  */
 
-var header = require('./Headers.js');
+var parser = require('./FxParser.js');
 
 var FxSocket = function(socket)
 {
     this.socket = socket;
+    this.isConnect = false;
     socket.name = socket.remoteAddress + "\:" + socket.remotePort;
     this.mode = '';
+
 };
+var NSLog = function (type, str) {
+    var status = "";
+    if (type == 1) status = "INFO::";
+    if (type == 2) status = "Debug::";
+
+    console.log(status, str);
+}
+
 
 FxSocket.prototype.handeshake = function (chunk) {
-    var readHeaders = header.headers.readHeaders(chunk);
-    var resHeaders = header.headers.writeHeaders(readHeaders);
+    var readHeaders = parser.headers.readHeaders(chunk);
+    var resHeaders = parser.headers.writeHandshake(readHeaders);
     this.socket.write(resHeaders);
 };
 
@@ -31,7 +41,21 @@ FxSocket.prototype.read = function (data) {
     if (this.mode === 'flashsocket') return read_flashsocket(data);
     if (this.mode === 'ws') {
         this.protocol = read_websocket(data);
-        return this.protocol['msg'];
+
+        var opcode = this.protocol.opcode;
+
+        NSLog(1,'ws-opcode: ' + this.protocol.opcode );
+
+        if (opcode === 1){
+            return this.protocol['msg'];
+        }else if (opcode === 2){
+            var byte2str = this.protocol['msg'].toString('utf8');
+        }
+        // opcode 0x01 Text
+        // opcode 0x02 ByteArray
+        // TODO opcode 0x08 frame client destory ws
+        // TODO opcode 0x09 frame Pring control frame
+        // TODO opcode 0x0A frame Pong control frame
     }
 };
 
@@ -56,7 +80,7 @@ function read_flashsocket(data) {
 };
 
 function read_websocket(data) {
-    var protocol = header.protocols.readFraming(data);
+    var protocol = parser.protocols.readFraming(data);
     return protocol;
 }
 
@@ -66,7 +90,7 @@ function read_websocket(data) {
  */
 function emit_websocket(data) {
     var payload = new Buffer(data);
-    var buffer = header.protocols.writeFraming(true,1,false,payload);
+    var buffer = parser.protocols.writeFraming(true,1,false,payload);
     return Buffer.concat([buffer, payload], buffer.length + payload.length);
 };
 
@@ -94,6 +118,14 @@ FxSocket.prototype.__defineGetter__("mode", function () {
 FxSocket.prototype.__defineSetter__("mode", function (mode) {
     this.socket.mode = mode;
 });
+
+FxSocket.prototype.__defineGetter__("namespace", function () {
+    return this.socket.namespace;
+});
+FxSocket.prototype.__defineSetter__("namespace", function (namespace) {
+    this.socket.namespace = namespace;
+});
+
 module.exports = exports = FxSocket;
 
 

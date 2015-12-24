@@ -1,14 +1,82 @@
 /**
- * Created by benson_liao on 2015/11/17.
+ * Created by Benson.Liao on 2015/11/17.
  */
 
 var crypto = require("crypto");
+
+const status_code = exports.statusCode = {
+    100 : 'Continue',
+    101 : 'Switching Protocols',
+    102 : 'Processing',                 // RFC 2518, obsoleted by RFC 4918
+    200 : 'OK',
+    201 : 'Created',
+    202 : 'Accepted',
+    203 : 'Non-Authoritative Information',
+    204 : 'No Content',
+    205 : 'Reset Content',
+    206 : 'Partial Content',
+    207 : 'Multi-Status',               // RFC 4918
+    208 : 'Already Reported',
+    226 : 'IM Used',
+    300 : 'Multiple Choices',
+    301 : 'Moved Permanently',
+    302 : 'Found',
+    303 : 'See Other',
+    304 : 'Not Modified',
+    305 : 'Use Proxy',
+    307 : 'Temporary Redirect',
+    308 : 'Permanent Redirect',         // RFC 7238
+    400 : 'Bad Request',
+    401 : 'Unauthorized',
+    402 : 'Payment Required',
+    403 : 'Forbidden',
+    404 : 'Not Found',
+    405 : 'Method Not Allowed',
+    406 : 'Not Acceptable',
+    407 : 'Proxy Authentication Required',
+    408 : 'Request Timeout',
+    409 : 'Conflict',
+    410 : 'Gone',
+    411 : 'Length Required',
+    412 : 'Precondition Failed',
+    413 : 'Payload Too Large',
+    414 : 'URI Too Long',
+    415 : 'Unsupported Media Type',
+    416 : 'Range Not Satisfiable',
+    417 : 'Expectation Failed',
+    418 : 'I\'m a teapot',              // RFC 2324
+    421 : 'Misdirected Request',
+    422 : 'Unprocessable Entity',       // RFC 4918
+    423 : 'Locked',                     // RFC 4918
+    424 : 'Failed Dependency',          // RFC 4918
+    425 : 'Unordered Collection',       // RFC 4918
+    426 : 'Upgrade Required',           // RFC 2817
+    428 : 'Precondition Required',      // RFC 6585
+    429 : 'Too Many Requests',          // RFC 6585
+    431 : 'Request Header Fields Too Large',// RFC 6585
+    500 : 'Internal Server Error',
+    501 : 'Not Implemented',
+    502 : 'Bad Gateway',
+    503 : 'Service Unavailable',
+    504 : 'Gateway Timeout',
+    505 : 'HTTP Version Not Supported',
+    506 : 'Variant Also Negotiates',    // RFC 2295
+    507 : 'Insufficient Storage',       // RFC 4918
+    508 : 'Loop Detected',
+    509 : 'Bandwidth Limit Exceeded',
+    510 : 'Not Extended',               // RFC 2774
+    511 : 'Network Authentication Required' // RFC 6585
+};
+
+const CRLF = "\r\n";
+
+
 
 function Headers(){
     this.name = 'Headers';
 
 }
-/*
+/* // - - - sample - - - //
  GET ws://127.0.0.1:8080/ HTTP/1.1 \r\n
  Host: 127.0.0.1:8080\r\n
  Connection: Upgrade\r\n
@@ -56,7 +124,12 @@ Headers.prototype.readHeaders = function (chunk) {
     console.log(this.name);
     return headers;
 };
-Headers.prototype.writeHeaders = function (reqHeaders) {
+/**
+ * Websocket connection, the client sends a handshake request, and server return a handshake response.
+ * @param reqHeaders: client request
+ * @returns {string}: server response
+ */
+Headers.prototype.writeHandshake = function (reqHeaders) {
 
 
     var sKey = crypto.createHash("sha1").update(reqHeaders["sec-websocket-key"] + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").digest("base64");
@@ -68,7 +141,45 @@ Headers.prototype.writeHeaders = function (reqHeaders) {
         'Sec-WebSocket-Origin: ' + reqHeaders['Origin'],
         'Sec-WebSocket-Location: ' + reqHeaders['Origin']
     ];
-    return resHeaders.join("\r\n") + "\r\n\r\n";
+    return resHeaders.join(CRLF) + CRLF + CRLF;
+};
+
+Headers.prototype.setHTTPHeader = function (name, value) {
+    if (typeof name !== 'string') {
+      throw new TypeError(
+          'Header name must be a valid HTTP Token ["' + name + '"]');  }
+    if (value == undefined)
+      throw  new Error('"value" required in setHeader("' + name + '", value)');
+
+    var key = name.toLowerCase();
+
+    return key + ": " + value + CRLF;
+};
+Headers.prototype.responseHeader = function (code, reason, obj) {
+    var headers = "";
+
+    headers += this.setStatusCode(code);
+
+    if (typeof reason === 'string') {
+        headers += reason;
+    }else{
+        obj = reason;
+    }
+
+    if (obj) {
+        var keys = Object.keys(obj);
+        for (var i = 0; i < keys.length; i++) {
+            var k = keys[i];
+            if (k) headers += this.setHTTPHeader(k, obj[k]);
+        }
+    }
+
+    return headers + CRLF + CRLF;
+};
+
+Headers.prototype.setStatusCode = function (code) {
+
+    return "HTTP/1.1 " + code + " " + status_code[code] + CRLF;
 };
 
 // ---------------------------------------------------------------------

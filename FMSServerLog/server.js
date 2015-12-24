@@ -14,7 +14,7 @@ var crypto = require("crypto");
 var net = require('net');
 var util = require('util');
 var events = require('events');
-var hr = require('./Headers.js');
+var hr = require('./fxNetSocket/lib/FxParser.js');
 
 util.inherits(this, events.EventEmitter);
 
