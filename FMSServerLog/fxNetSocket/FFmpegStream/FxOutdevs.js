@@ -52,12 +52,12 @@ function FxOutdevs(fileName) {
                     throw "[Error] - Data is NULL.";
                 }
                 self.running = true;
-                // 檢查Buffer 是否reset
+                // Confirm Buffer do reset
                 if (stream_data == "")
                     stream_data = new Buffer(chunk);
                 else
                     stream_data = Buffer.concat([stream_data, chunk]);
-                // 檢查stdout cmdline單列指令長度是否已經是8192(win平台不確定)
+                // CHECK stdout cmdline單列指令長度是否已經是8192(win平台不確定)
                 if (chunk.length < 8192) {
                     //self.streamdata = stream_data.toString('base64');
                     //console.log("[Total] %d bytes", stream_data.length);
@@ -82,6 +82,8 @@ function FxOutdevs(fileName) {
         var stdoutCloseHandler = function(code) {
             console.log(self.name + ' you are terminated.');
             logger.debug("[Close] close_event - Child process exited with code " + code);
+            self.emit('close');
+
             self.running = false;
         };
         var stdoutExitHandler = function() {
@@ -117,7 +119,7 @@ function FxOutdevs(fileName) {
     }
     catch (e) {
         console.log('[ERROR]createServer::', e);
-        logger.debug("FxOutdevs try error: " + e);
+        logger.debug("FxOutdevs Exception ERRORS: " + e);
     }
 
 }
