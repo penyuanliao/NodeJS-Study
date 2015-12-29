@@ -15,7 +15,7 @@ var logger = require('./FxLogger.js');
 
 var clients = []; // 紀錄使用者
 
-util.inherits(FxConnection, events.EventEmitter);
+util.inherits(FxConnection, events.EventEmitter); // 繼承事件
 
 var fxStatus = {
     "http":         "http",
@@ -32,11 +32,15 @@ var fxStatus = {
  */
 function FxConnection(port, option){
 
+    /* Variables */
+
     events.EventEmitter.call(this);
 
     var self = this;
 
     var app = this.app = net.createServer();
+
+    /* Codes */
 
     this.server = this.app.listen(port, function () {
         console.log('Listening on ' + app.address().port);
@@ -159,7 +163,7 @@ var findOutSocketConnected = function (client, chunk, self) {
     var lines = request_headers.split("\r\n");
     // [?=\/] 結尾不包含
     var httpTag = lines[0].toString().match(/^GET (.+)[?=\/] HTTP\/\d\.\d$/i);
-
+    httpTag = (httpTag == null) ? lines[0].toString().match(/^GET (.+) HTTP\/\d\.\d$/i) + "/" : httpTag; // WS protocol namespace endpoint no '/'
     // FLASH SOCKET \0
     var unicodeNull = request_headers.match(/\0/g); // check endpoint
     var swfPolicy = request_headers.match("<policy-file-request/>") == null; // Flash Policy
