@@ -162,7 +162,7 @@ var findOutSocketConnected = function (client, chunk, self) {
     var request_headers = chunk.toString('utf8');
     var lines = request_headers.split("\r\n");
     // [?=\/] 結尾不包含
-    var httpTag = lines[0].toString().match(/^GET (.+)[?=\/] HTTP\/\d\.\d$/i);
+    var httpTag = lines[0].toString().match(/^GET (.+)[\/]? HTTP\/\d\.\d$/i);
     httpTag = (httpTag == null) ? lines[0].toString().match(/^GET (.+) HTTP\/\d\.\d$/i) + "/" : httpTag; // WS protocol namespace endpoint no '/'
     // FLASH SOCKET \0
     var unicodeNull = request_headers.match(/\0/g); // check endpoint
@@ -229,8 +229,22 @@ FxConnection.prototype.clientsCount = function () {
     return keys.length;
 };
 
-FxConnection.prototype.getClients = function () {
-    return clients;
+FxConnection.prototype.getClients = function (namespace) {
+    if (typeof namespace === 'undefined' || namespace == null ) return clients;
+
+    // output array
+    // TODO 不確定這樣寫法要不要留
+    var keys = Object.keys(clients);
+    var groups = [];
+    for (var i = 0 ; i < keys.length; i++) {
+        var socket = clients[keys[i]];
+        if (socket.isConnect == true) {
+            if (socket.namespace === namespace)
+                groups.push(socket);
+        }
+    }
+    return groups;
+
 };
 
 module.exports = FxConnection;
