@@ -11,6 +11,13 @@ var configLog = {
     stderr : 1
 };
 
+const stdoutStatus = {
+    'INIT':  0,
+    'OPEN':  1,
+    'CLOSE': 2,
+    'ERROR': 3
+};
+
 var logger = require('../lib/FxLogger.js');
 
 util.inherits(FxOutdevs, events.EventEmitter);
@@ -21,6 +28,8 @@ function FxOutdevs(fileName) {
     _fileName = fileName;
 
     this.running = false;
+
+    this.STATUS = stdoutStatus.INIT;
 
     /*** Initialize ***/
     try {
@@ -33,7 +42,8 @@ function FxOutdevs(fileName) {
         //    "-vcodec", "libx264", "-pass", "1", "-coder", "0", "-bf", "0",
         //    "-flags", "-loop", "-wpredp", "0", "-an",
         //    "-preset:v", "ultrafast", "-tune:v", "zerolatency", "-f", "h264", "pipe:1"];
-        var params = ["-y", "-i", _fileName, "-r", "30000/1001", "-b:v", "300k", "-b:a", "8k", "-bt", "10k", "-vcodec", "libx264", "-pass", "1", "-coder", "0", "-bf", "0", "-flags", "-loop", "-wpredp", "0", "-an", "-preset:v", "ultrafast", "-tune", "zerolatency","-level:v", "5.2", "-f", "h264", "pipe:1"];
+        // -r set 10 fps for flv streaming source.
+        var params = ["-y", "-i", _fileName, "-r", "10", "-b:v", "300k", "-b:a", "8k", "-bt", "10k", "-vcodec", "libx264", "-pass", "1", "-coder", "0", "-bf", "0", "-timeout", "1", "-flags", "-loop", "-wpredp", "0", "-an", "-preset:v", "ultrafast", "-tune", "zerolatency","-level:v", "5.2", "-f", "h264", "pipe:1"];
         var fmParams = " " + (params.toString()).replace(/[,]/g, " ");
         console.log("ffmpeg " + fmParams);
 
@@ -52,6 +62,7 @@ function FxOutdevs(fileName) {
                     throw "[Error] - Data is NULL.";
                 }
                 self.running = true;
+                self.STATUS = stdoutStatus.OPEN;
                 // Confirm Buffer do reset
                 if (stream_data == "")
                     stream_data = new Buffer(chunk);
@@ -75,19 +86,22 @@ function FxOutdevs(fileName) {
         };
 
         var stderrDataHanlder = function (buf) {
-
-            //if (configLog.stderr) console.log('[INFO] stderr info::', String(buf));
+            var str = String(buf);
+            //console.log('[INFO] stderr info::', str);
+            //  1. Network is unreachable
+            //  2. Cannot open connection
         };
 
         var stdoutCloseHandler = function(code) {
             console.log(self.name + ' you are terminated.');
             logger.debug("[Close] close_event - Child process exited with code " + code);
             self.emit('close');
-
             self.running = false;
+            self.STATUS = stdoutStatus.CLOSE;
         };
         var stdoutExitHandler = function() {
             console.log('[Debug] Hasta la vista, baby!');
+            self.running = false;
             logger.debug("[Exit] Exit_event - Child process exited ");
         };
         var readableHandler = function () {
@@ -98,6 +112,8 @@ function FxOutdevs(fileName) {
         var streamErrorHandler = function(err) {
             console.log("[ERROR] Some stream error: ", err);
             logger.debug("[streamError] Some stream error: " + err);
+            self.running = false;
+            self.STATUS = stdoutStatus.ERROR;
         };
         
         this.streamDelegate.on("data", streamDataHandler); // Standard Output 標準輸出串流(輸出cli視窗)
