@@ -1,5 +1,7 @@
 /**
- * Created by penyuan on 15/12/9.
+ * Created by Benson.Liao on 15/12/9.
+ * --always-compact: always full gc().
+ * --expose-gc: manual gc().
  */
 
 var fxNetSocket = require('./fxNetSocket');
@@ -13,6 +15,8 @@ require('events');
 var configure = appParames();
 /** 所有視訊stream物件 **/
 var liveStreams = {};
+const videoDomainName = "183.182.79.162:1935";
+//const videoDomainName = "192.168.188.72:1935";
 
 /** createLiveStreams **/
 createLiveStreams(configure.fileName);
@@ -20,18 +24,49 @@ utilities.autoReleaseGC(); //** 手動 1 sec gc
 var srv = new FxConnection(configure.port);
 srv.on('connection', function (socket) {
     console.log('clients:',socket.name);
-    //console.log(s.getClients());
+    // 檢查 Stream List 建立
+    if (typeof liveStreams != 'undefined' && liveStreams != null ) {
+        var swpan = liveStreams[socket.namespace];
 
+        if (typeof swpan == 'undefined' && swpan == null ) {
+            // return;
+
+            verificationString(socket.namespace)
+            // 特殊需求這邊本來應該return;如果連線指定伺服器啟動
+            createLiveStreams(["rtmp://" + videoDomainName + "/video" + socket.namespace]);
+        }else
+            rebootStream(swpan);
+
+    }else {
+        //todo 為建立狀態流程處理
+        console.error("[ERROR]Stream not Create.");
+    }
 });
-
+/** socket data event **/
 srv.on('message', function (data) {
     console.log('message :',data);
 });
+/** client socket destroy **/
 srv.on('disconnect', function (socket) {
     console.log('disconnect_fxconnect_client.');
     //socket.removeListener('connection', callback);
 });
+/** verification **/
+function verificationString(str) {
+    var regexp = /(video[0-9a-zA-Z]*)/i;
+    var val = str.match(regexp);
+    if (val[0] !== null && typeof val !== 'undefined') {
+        return true;
+    }else
+        return false;
+}
 
+/**
+ * client socket connection is http connect()
+ * @param req: request
+ * @param client: client socket
+ * @param head: req header
+ * **/
 srv.on('httpUpgrade', function (req, client, head) {
 
     console.log('## upgrade ##');
@@ -78,7 +113,11 @@ srv.on('httpUpgrade', function (req, client, head) {
     }
 
 });
-
+/**
+ * @param code: response header Status Code
+ * @param socket: client socket
+ * @param type: content-type
+ * */
 function successfulHeader(code, socket, type) {
 
     var contentType = type === 'js' ? "application/javascript" : "text/html";
@@ -95,6 +134,10 @@ function successfulHeader(code, socket, type) {
     //socket.write("Content-Security-Policy: default-src 'self'; img-src *;object-src 'self' http://127.0.0.1; script-src 'self' http://127.0.0.1;\n");
     socket.write(headers);
 };
+/**
+ * @param code: response header Status Code
+ * @param socket: client socket
+ * */
 function failureHeader(code, socket) {
 
     var headers = parser.headers.responseHeader(code, {
@@ -103,18 +146,21 @@ function failureHeader(code, socket) {
 
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-function createLiveStreams() {
-    var sn = configure.fileName;
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
+// STREAM //
+function createLiveStreams(fileName) {
+    var sn = fileName;
     var spawned,_name;
     for (var i = 0; i < sn.length; i++) {
         // schema 2, domain 3, port 5, path 6,last path 7, file 8, querystring 9, hash 12
         _name = sn[i].toString().match(/^((rtmp[s]?):\/)?\/?([^:\/\s]+)(:([^\/]*))?((\/\w+)*\/)([\w\-\.]+[^#?\s]+)(\?([^#]*))?(#(.*))?$/i);
-        if (typeof  _name[7] != 'undefined') {
-            spawned = liveStreams[_name[7]] = new outputStream(sn[i]);
-            spawned.name = _name[7];
+        if (typeof  _name[7] != 'undefined' && typeof _name[8] != 'undefined') {
+            var pathname = _name[7] +"/"+ _name[8];
+            spawned = liveStreams[pathname] = new outputStream(sn[i]);
+            spawned.idx = i;
+            spawned.name = pathname;
             spawned.on('streamData', swpanedUpdate);
+            spawned.on('close', swpanedClosed);
             spawned = null;
         }else {
             throw "create Live Stream path error." + sn[i];
@@ -122,20 +168,41 @@ function createLiveStreams() {
 
     };
 
-
-    setInterval(observerTotoalUseMem,10000); // testing code
+    setInterval(observerTotoalUseMem,60000); // testing code 1.0 min
 };
-// 重啟stream
-function rebootStream(streamName) {
-    if (spawned.running == false) {
-        spawned = new outputStream(streamName);
-        spawned.on('streamData', swpanedUpdate);
+/** 重啟stream **/
+function rebootStream(spawned) {
+    if (spawned.running == false && spawned.STATUS >= 2) {
+        console.log('>>rebootStream:', spawned.name);
+        var spawn = liveStreams[spawned.name] = new outputStream(configure.fileName[spawned.idx]);
+        spawn.idx = spawned.idx;
+        spawn.name = spawned.name;
+        spawn.on('streamData', swpanedUpdate);
+        spawned.removeListener('streamData', swpanedUpdate);
+        spawned = null;
     }
 }
-// ffmpeg stream pull the data of a base64
+/** ffmpeg stream pull the data of a base64 **/
 function swpanedUpdate(base64) {
 
-    var swpanName = this.name;
+    var spawnName = this.name;
+    var clients = srv.getClients();
+    var keys = Object.keys(clients);
+    if (keys.length == 0) return;
+
+    for (var i = 0 ; i < keys.length; i++) {
+        var socket = clients[keys[i]];
+        if (socket.isConnect == true) {
+            if (socket.namespace === spawnName)
+                socket.write(JSON.stringify({"NetStreamEvent":"NetStreamData",data:base64}));
+        }
+
+    }
+
+    keys = null;
+}
+
+function socketSend(evt, spawnName) {
 
     var clients = srv.getClients();
     var keys = Object.keys(clients);
@@ -144,14 +211,24 @@ function swpanedUpdate(base64) {
     for (var i = 0 ; i < keys.length; i++) {
         var socket = clients[keys[i]];
         if (socket.isConnect == true) {
-            if (socket.namespace === swpanName)
-                socket.write(JSON.stringify({"NetStreamEvent":"NetStreamData",data:base64}));
+            if (socket.namespace === spawnName)
+                socket.write(JSON.stringify(evt));
         }
 
     }
 
     keys = null;
 }
+
+/* ------- start testing logger ------- */
+/** ffmpeg stream close **/
+function swpanedClosed(){
+
+    socketSend({'NetStatusEvent': 'NetConnect.Failed'}, this.name);
+
+    logger.reachabilityWithHostName(videoDomainName);
+
+};
 /** 觀察記憶體使用狀況 **/
 function observerTotoalUseMem() {
 
@@ -161,16 +238,21 @@ function observerTotoalUseMem() {
         resume();
         pids.push(liveStreams[element].ffmpeg.pid);
     }, function() {
-        console.log('complete');
         logger.logTotalMemoryUsage(pids);
     });
 
 }
+/* ------- ended testing logger ------- */
 
 process.on('uncaughtException', function (err) {
     console.error(err.stack);
 });
 
+/**
+ * Application parameters
+ * @param -p port
+ * @param -f loadfile or remote link
+ * **/
 function appParames(){
     var args = {};
     process.argv.forEach(function(element, index, arr) {
@@ -193,8 +275,4 @@ function appParames(){
 
     return args;
 }
-
-
-//
-
 

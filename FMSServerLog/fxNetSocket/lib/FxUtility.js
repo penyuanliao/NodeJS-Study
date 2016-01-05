@@ -3,10 +3,16 @@
  */
 var logger = require('./FxLogger.js');
 function FxUtility() {
+
+    /* Variables */
     this.js_auto_gc;
     this.js_auto_gc_enabled = false;
-};
 
+    /* Codes */
+};
+/**
+ * action auto gc()
+ */
 FxUtility.prototype.autoReleaseGC = function () {
     this.js_auto_gc = setInterval(function() {
         gc && gc();
@@ -14,7 +20,9 @@ FxUtility.prototype.autoReleaseGC = function () {
     },1000);
     this.js_auto_gc_enabled = true;
 };
-
+/**
+ * action auto gc() stop
+ * */
 FxUtility.prototype.shutDownAutoGC = function () {
 
     clearInterval(this.js_auto_gc);
@@ -59,3 +67,5 @@ Array.prototype.asyncEach = function(iterator, complete) {
 };
 
 module.exports = exports = new FxUtility();
+
+

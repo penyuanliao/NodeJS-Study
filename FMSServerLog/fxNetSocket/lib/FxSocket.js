@@ -4,21 +4,28 @@
 
 var parser = require('./FxParser.js');
 
+/***
+ * Custom net socket connection
+ * @param socket : net.socket
+ * @constructor
+ */
 var FxSocket = function(socket)
 {
+    /* Variables */
     this.socket = socket;
     this.isConnect = false;
     socket.name = socket.remoteAddress + "\:" + socket.remotePort;
     this.mode = '';
 
 };
+
 var NSLog = function (type, str) {
     var status = "";
     if (type == 1) status = "INFO::";
     if (type == 2) status = "Debug::";
 
     console.log(status, str);
-}
+};
 
 
 FxSocket.prototype.handeshake = function (chunk) {
@@ -93,7 +100,6 @@ function emit_websocket(data) {
     var buffer = parser.protocols.writeFraming(true,1,false,payload);
     return Buffer.concat([buffer, payload], buffer.length + payload.length);
 };
-
 
 //FxSocket.prototype = {
 //    get name() {
