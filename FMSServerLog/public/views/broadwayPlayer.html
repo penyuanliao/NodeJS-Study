@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title> Rtmp > ffmpeg > websocket > Broadway Player</title>
+    <style>
+        button {
+            width: 100px;
+            display:inline-block;
+            padding-bottom: 10px;
+            padding-top: 10px;
+            margin: 0px 0px 5px 05px;
+            border-radius:4px;
+            border: 1px solid transparent;
+            background-color: #5bc0de;
+            border-color: #46b8da;
+            color: white;
+        }
+        button[disabled] {
+            background-color: #d9534f;
+            border-color: #d43f3a;
+        }
+
+    </style>
+    <!--<script type="text/javascript" src="../js/broadway/Decoder.js"></script>-->
+    <script type="text/javascript" src="../js/broadway/YUVWebGLCanvas.js"></script>
+    <script type="text/javascript" src="../js/broadway/Player.js"></script>
+
+    <script type="text/javascript" src="../js/broadway/stream.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+    window.onload = load;
+
+    function load() {
+        var nodes = document.querySelectorAll('div.broadway');
+//        for (var i = 0; i < nodes.length; i++) {
+//            var broadway = new Broadway(nodes[i]);
+////            broadway.decode()
+//            // broadway.play();
+//        };
+
+        var player = createPlayer(nodes[0]); // 播放器
+        var ws; // websocket連線
+        var selectBtn;
+
+        function createPlayer(node) {
+            var player = new Player({
+                useWorker: true,
+                workerFile: "../js/broadway/Decoder.js"
+                ,size: { width: 640, height: 300 }
+            });
+
+            node.appendChild(player.canvas);
+
+            return player;
+        };
+
+        var toUint8Array = function(parStr){
+            //console.log(parStr);
+            var raw = window.atob(parStr);
+            var rawLength = raw.length;
+            var array = new Uint8Array(new ArrayBuffer(rawLength));
+
+            var i;
+            for(i = 0; i < rawLength; i++) {
+                array[i] = raw.charCodeAt(i);
+            }
+            return array;
+        };
+
+        var liveList = ["live1","live2","live3","live4","live5","live6","live7"];
+
+        for (var i = 0; i < liveList.length; i++) {
+            var obj = liveList[i];
+            var button = document.getElementById(obj);
+            button.onclick = onClickHandle;
+        }
+
+        function onClickHandle(e) {
+
+            if (typeof selectBtn != 'undefined' && selectBtn != null) {
+                selectBtn.disabled = false;
+            }
+
+            var btn = this;
+            selectBtn = btn;
+            btn.disabled = true;
+            if (typeof ws != 'undefined' && ws != null)
+            {
+                ws.close();
+//                var context = player.canvas.getContext('webgl');;
+//                console.log(context);
+//                context.clearColor(0.0, 0.0, 0.0, 1.0);
+//                context.clear(context.COLOR_BUFFER_BIT);
+                ws.removeEventListener("open", onCloseHandle);
+                ws.removeEventListener("close", onOpenHandle);
+                ws.removeEventListener("message", onMessageHandle);
+                nodes[0].removeChild(player.canvas);
+                player = null;
+                player = createPlayer(nodes[0]);
+            };
+
+            liveStream(btn.value);
+        }
+
+        function liveStream(namespace) {
+            var wsURL = 'ws://183.182.74.182:80/'+ namespace +'/video0';
+//            var wsURL = 'ws://127.0.0.1:3000/'+ namespace +'/video0';
+            ws = new WebSocket(wsURL);
+
+            ws.onopen = onOpenHandle;
+            ws.onclose = onCloseHandle;
+            ws.onmessage = onMessageHandle;
+        };
+        function onCloseHandle(evt) {
+            console.log('websocket on disconnect.');
+        };
+        function onOpenHandle(evt){
+            console.log('websocket on connected.');
+            ws.send("hi server");
+        };
+        function onMessageHandle(evt) {
+//            console.log('data connected.',evt);
+            var json = JSON.parse(evt.data);
+
+            if (json.NetStreamEvent === "NetStreamData") {
+                var bin = toUint8Array(json.data);
+                player.decode(bin);
+            }
+
+        };
+
+    };
+</script>
+
+    <div class="broadway" width="640" height="300" style="float: left; position: relative;" workers="false" render="true" webgl="auto"></div>
+    <p>
+        <button id="live1" class="button" value="daabb" >BaccaratA</button><br/>
+        <button id="live2" value="daabc">BaccaratB</button><br/>
+        <button id="live3" value="daabd">BaccaratC</button><br/>
+        <button id="live4" value="daabg">BaccaratD</button><br/>
+        <button id="live5" value="daabh">BaccaratE</button><br/>
+        <button id="live6" value="daabdg">BaccaratI</button><br/>
+        <button id="live7" value="daabdh">BaccaratJ</button><br/>
+    </p>
+</body>
+</html>
