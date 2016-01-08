@@ -76,8 +76,10 @@ logger.prototype.reachabilityWithHostName = function (name) {
         logger.instance.debug("reachability:" + stdout);
     });
 };
-
-
+/**
+ * 統計pid記憶體使用量
+ * @param PIDs
+ */
 logger.prototype.logTotalMemoryUsage = function (PIDs) {
     exec.exec("ps -p " + PIDs + " -o pcpu,pmem,vsz,rss | awk '{pcpu += $1; pmem += $2; vsz += $3; rss += $4;} END { print pcpu, pmem, vsz, rss }'", function (err, stdout, stderr) {
         err = err || stderr;
@@ -87,7 +89,12 @@ logger.prototype.logTotalMemoryUsage = function (PIDs) {
         }
     });
 };
-logger.prototype.procState = function (pid,callback) {
+/**
+ * is Dead or Alive
+ * @param pid
+ * @param callback
+ */
+logger.prototype.procState = function (pid, callback) {
     exec.exec("ps -p " + pid + " -o pid | awk '{pid += $1;} END {print pid}'", function (err, stdout, stderr) {
         err = err || stderr;
         if (!err) {

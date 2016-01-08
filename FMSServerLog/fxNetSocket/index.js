@@ -1,9 +1,16 @@
+
+
 exports.NetCoonection = require("./lib/FxConnection");
 exports.netConnection = exports.NetCoonection;
 
-exports.stdoutStream = require('./FFmpegStream/FxOutdevs.js');
+exports.StdoutStream = require('./FFmpegStream/FxOutdevs.js');
+exports.stdoutStream = exports.StdoutStream;
 
-exports.parser = require('./lib/FxParser.js');
+exports.Parser = require('./lib/FxParser.js');
+exports.parser = exports.Parser;
 
-exports.utilities = require('./lib/FxUtility.js');
-exports.logger = require('./lib/FxLogger.js');
+exports.Utilities = require('./lib/FxUtility.js');
+exports.utilities = exports.Utilities;
+
+exports.Logger = require('./lib/FxLogger.js');
+exports.logger = exports.Logger;
