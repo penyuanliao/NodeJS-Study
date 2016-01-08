@@ -10,18 +10,18 @@ var outputStream = fxNetSocket.stdoutStream;
 var parser = fxNetSocket.parser;
 var utilities = fxNetSocket.utilities;
 var logger = fxNetSocket.logger;
-var fs = require('fs');
-require('events');
-var configure = appParames();
+var fs  = require('fs');
+var evt = require('events');
+var cfg = require('./config.js');
 /** 所有視訊stream物件 **/
 var liveStreams = {};
-const videoDomainName = "183.182.79.162:1935";
-//const videoDomainName = "192.168.188.72:1935";
+//const videoDomainName = "183.182.79.162:1935";
+
 
 /** createLiveStreams **/
-createLiveStreams(configure.fileName);
+createLiveStreams(cfg.appConfig.fileName);
 utilities.autoReleaseGC(); //** 手動 1 sec gc
-var srv = new FxConnection(configure.port);
+var srv = new FxConnection(cfg.appConfig.port);
 srv.on('connection', function (socket) {
     console.log('clients:',socket.name);
     // 檢查 Stream List 建立
@@ -31,9 +31,9 @@ srv.on('connection', function (socket) {
         if (typeof swpan == 'undefined' && swpan == null ) {
             // return;
 
-            verificationString(socket.namespace)
+            var confirm = verificationString(socket.namespace);
             // 特殊需求這邊本來應該return;如果連線指定伺服器啟動
-            createLiveStreams(["rtmp://" + videoDomainName + "/video" + socket.namespace]);
+            if (confirm) createLiveStreams(["rtmp://" + cfg.videoDomainName + socket.namespace]);
         }else
             rebootStream(swpan);
 
@@ -53,9 +53,9 @@ srv.on('disconnect', function (socket) {
 });
 /** verification **/
 function verificationString(str) {
-    var regexp = /(video[0-9a-zA-Z]*)/i;
+    var regexp = /(video\/video[0-9a-zA-Z]*)/i;
     var val = str.match(regexp);
-    if (val[0] !== null && typeof val !== 'undefined') {
+    if (val !== null && typeof val !== 'undefined' && val[0] !== null) {
         return true;
     }else
         return false;
@@ -154,8 +154,8 @@ function createLiveStreams(fileName) {
     for (var i = 0; i < sn.length; i++) {
         // schema 2, domain 3, port 5, path 6,last path 7, file 8, querystring 9, hash 12
         _name = sn[i].toString().match(/^((rtmp[s]?):\/)?\/?([^:\/\s]+)(:([^\/]*))?((\/\w+)*\/)([\w\-\.]+[^#?\s]+)(\?([^#]*))?(#(.*))?$/i);
-        if (typeof  _name[7] != 'undefined' && typeof _name[8] != 'undefined') {
-            var pathname = _name[7] +"/"+ _name[8];
+        if (typeof  _name[6] != 'undefined' && typeof _name[8] != 'undefined') {
+            var pathname = _name[6] + _name[8];
             spawned = liveStreams[pathname] = new outputStream(sn[i]);
             spawned.idx = i;
             spawned.name = pathname;
@@ -226,7 +226,7 @@ function swpanedClosed(){
 
     socketSend({'NetStatusEvent': 'NetConnect.Failed'}, this.name);
 
-    logger.reachabilityWithHostName(videoDomainName);
+    logger.reachabilityWithHostName(cfg.videoDomainName);
 
 };
 /** 觀察記憶體使用狀況 **/
@@ -248,31 +248,5 @@ process.on('uncaughtException', function (err) {
     console.error(err.stack);
 });
 
-/**
- * Application parameters
- * @param -p port
- * @param -f loadfile or remote link
- * **/
-function appParames(){
-    var args = {};
-    process.argv.forEach(function(element, index, arr) {
-        // Processing
 
-        if (element === "-p") {
-            var port = parseInt(process.argv[index + 1]);
-
-            args["port"] = !isNaN(port) ? port : 8080;
-        }else if (element === "-f") {
-            var fileName = process.argv[index + 1];
-            if (!fileName && typeof fileName != "undefined" && fileName !=0) {
-                fileName = "";
-                throw "fileName no definition.";
-            }
-            args["fileName"] = fileName.split(" ");
-        }
-
-    });
-
-    return args;
-}
 
