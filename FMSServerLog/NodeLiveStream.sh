@@ -5,7 +5,7 @@
    echo '  / /__\ \/ / '
    echo ' / ___//   /  '
    echo '/_/   /_/\_\  '
-   echo '              v0.5'
+   echo '              v0.7'
 #  --always-compact
 SERV_PARAMS="--max-old-space-size=8192 --expose-gc"
 
