@@ -22,7 +22,7 @@
         }
 
     </style>
-    <!--<script type="text/javascript" src="../js/broadway/Decoder.js"></script>-->
+    <script type="text/javascript" src="../js/broadway/Decoder-release.js"></script>
     <script type="text/javascript" src="../js/broadway/YUVWebGLCanvas.js"></script>
     <script type="text/javascript" src="../js/broadway/Player.js"></script>
 
@@ -43,11 +43,19 @@
         var player = createPlayer(nodes[0]); // 播放器
         var ws; // websocket連線
         var selectBtn;
+        var decode = new Decoder();
+        var st;
+
+
+        player.onPictureDecoded = function (buffer, width, height, infos) {
+//            console.log('onPictureDecoded',buffer.length, width, height, infos);
+            endTime();
+        };
 
         function createPlayer(node) {
             var player = new Player({
                 useWorker: true,
-                workerFile: "../js/broadway/Decoder.js"
+                workerFile: "../js/broadway/Decoder-release.js"
                 ,size: { width: 640, height: 300 }
             });
 
@@ -99,19 +107,23 @@
                 nodes[0].removeChild(player.canvas);
                 player = null;
                 player = createPlayer(nodes[0]);
+
+
             };
 
             liveStream(btn.value);
         }
 
         function liveStream(namespace) {
-            var wsURL = 'ws://183.182.74.182:80/'+ namespace +'/video0';
-//            var wsURL = 'ws://127.0.0.1:3000/'+ namespace +'/video0';
+//            var wsURL = 'ws://183.182.74.182:80/video/'+ namespace +'/video0';
+            var wsURL = 'ws://127.0.0.1:3000/'+ namespace +'/video0';
             ws = new WebSocket(wsURL);
 
             ws.onopen = onOpenHandle;
             ws.onclose = onCloseHandle;
             ws.onmessage = onMessageHandle;
+
+            connts();
         };
         function onCloseHandle(evt) {
             console.log('websocket on disconnect.');
@@ -127,15 +139,54 @@
             if (json.NetStreamEvent === "NetStreamData") {
                 var bin = toUint8Array(json.data);
                 player.decode(bin);
+//                decode.decode(bin);
+                connecttd();
+                startTime();
             }
 
         };
+
+        function once(fn, context) {
+            var result;
+
+            return function () {
+                if (fn) {
+                    result = fn.apply(context || this, arguments);
+                    fn = null;
+                }
+
+                return result;
+            };
+        };
+        var connts = once(function () {
+            st = new Date().getTime();
+        });
+        var connecttd = once(function () {
+            var time = new Date().getTime() - st;
+            console.log('Execution time:', time, 'ms');
+            var nodes = document.querySelectorAll('div.timer');
+            var p = document.createElement('p');
+            p.textContent = "(Connected)Execution time:" + time + "ms (" + time/1000 + ")";
+            nodes[0].appendChild(p);
+        });
+        var startTime = once(function () {
+           st = new Date().getTime();
+            console.log('runing...');
+        });
+        var endTime = once(function () {
+            var time = new Date().getTime() - st;
+            console.log('(Decoder)Execution time:', time, 'ms');
+            var nodes = document.querySelectorAll('div.timer');
+            var p = document.createElement('p');
+            p.textContent = "Execution time:" + time + "ms (" + time/1000 + " sec)";
+            nodes[0].appendChild(p);
+        });
 
     };
 </script>
 
     <div class="broadway" width="640" height="300" style="float: left; position: relative;" workers="false" render="true" webgl="auto"></div>
-    <p>
+    <div>
         <button id="live1" class="button" value="daabb" >BaccaratA</button><br/>
         <button id="live2" value="daabc">BaccaratB</button><br/>
         <button id="live3" value="daabd">BaccaratC</button><br/>
@@ -143,6 +194,7 @@
         <button id="live5" value="daabh">BaccaratE</button><br/>
         <button id="live6" value="daabdg">BaccaratI</button><br/>
         <button id="live7" value="daabdh">BaccaratJ</button><br/>
-    </p>
+    </div>
+    <div class="timer"></div>
 </body>
 </html>
