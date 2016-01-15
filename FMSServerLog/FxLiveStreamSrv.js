@@ -32,8 +32,15 @@ srv.on('connection', function (socket) {
             // return;
 
             var confirm = verificationString(socket.namespace);
-            // 特殊需求這邊本來應該return;如果連線指定伺服器啟動
-            if (confirm) createLiveStreams(["rtmp://" + cfg.videoDomainName + socket.namespace]);
+            // 特殊需求這邊本來應該return;如果連線指定伺服器啟動」
+            console.log("rtmp://" + cfg.videoDomainName + socket.namespace , confirm);
+            if (confirm) {
+                createLiveStreams(["rtmp://" + cfg.videoDomainName + socket.namespace]);
+            }else
+            {
+                socket.write(JSON.stringify({"NetStatusEvent":"Connect.Closed"}));
+                socket.close();//主動關閉回傳事件
+            }
         }else
             rebootStream(swpan);
 
@@ -53,7 +60,7 @@ srv.on('disconnect', function (socket) {
 });
 /** verification **/
 function verificationString(str) {
-    var regexp = /(video\/video[0-9a-zA-Z]*)/i;
+    var regexp = /(video\/[a-zA-Z]*\/video[0-9a-zA-Z]*)/i;
     var val = str.match(regexp);
     if (val !== null && typeof val !== 'undefined' && val[0] !== null) {
         return true;
@@ -157,7 +164,6 @@ function createLiveStreams(fileName) {
         if (typeof  _name[6] != 'undefined' && typeof _name[8] != 'undefined') {
             var pathname = _name[6] + _name[8];
             spawned = liveStreams[pathname] = new outputStream(sn[i]);
-            spawned.idx = i;
             spawned.name = pathname;
             spawned.on('streamData', swpanedUpdate);
             spawned.on('close', swpanedClosed);
@@ -171,10 +177,10 @@ function createLiveStreams(fileName) {
     setInterval(observerTotoalUseMem,60000); // testing code 1.0 min
 };
 /** 重啟stream **/
-function rebootStream(spawned) {
-    if (spawned.running == false && spawned.STATUS >= 2) {
+function rebootStream(spawned,skip) {
+    if ((spawned.running == false && spawned.STATUS >= 2) || skip == true) {
         console.log('>>rebootStream:', spawned.name);
-        var spawn = liveStreams[spawned.name] = new outputStream(configure.fileName[spawned.idx]);
+        var spawn = liveStreams[spawned.name] = new outputStream( "rtmp://" + cfg.videoDomainName + spawned.name);
         spawn.idx = spawned.idx;
         spawn.name = spawned.name;
         spawn.on('streamData', swpanedUpdate);
@@ -196,9 +202,7 @@ function swpanedUpdate(base64) {
             if (socket.namespace === spawnName)
                 socket.write(JSON.stringify({"NetStreamEvent":"NetStreamData",data:base64}));
         }
-
     }
-
     keys = null;
 }
 
@@ -222,9 +226,16 @@ function socketSend(evt, spawnName) {
 
 /* ------- start testing logger ------- */
 /** ffmpeg stream close **/
-function swpanedClosed(){
+function swpanedClosed(code){
 
     socketSend({'NetStatusEvent': 'NetConnect.Failed'}, this.name);
+
+
+    //** 監聽到自動關閉,重新啟動 code == 0 **/
+    if (1) {
+        console.log("listen swpaned Closed - ",this.name, " < REBOOTING >");
+        rebootStream(this,true);
+    }
 
     logger.reachabilityWithHostName(cfg.videoDomainName);
 

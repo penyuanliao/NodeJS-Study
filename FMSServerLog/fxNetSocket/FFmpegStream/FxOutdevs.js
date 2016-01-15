@@ -7,8 +7,16 @@ var _fileName,
     cp = require('child_process'),
     spawn = cp.spawn;
 
-var configLog = {
-    stderr : 1
+var avLog = {
+    "quiet"  : -8,
+    "panic"  :  0,
+    "fatal"  :  8,
+    "error"  : 16,
+    "warning": 24,
+    "info"   : 32,
+    "verbose": 40,
+    "debug"  : 48,
+    "trace"  : 56
 };
 
 const stdoutStatus = {
@@ -34,8 +42,9 @@ function FxOutdevs(fileName) {
     /*** Initialize ***/
     try {
         var self = this;
-        //"-loglevel", "debug",
+        //"-loglevel", "quiet",
         events.EventEmitter.call(this);
+        //
         //var params = ["-y", "-re",
         //    "-i", _fileName,
         //    "-r", "30000/1001", "-max_delay", "100", "-b:a", "128k", "-bt", "10k",
@@ -44,7 +53,7 @@ function FxOutdevs(fileName) {
         //    "-preset:v", "ultrafast", "-tune:v", "zerolatency", "-f", "h264", "pipe:1"];
         // -r set 10 fps for flv streaming source.
         // -- , "-pass", "1"
-        var params = ["-y", "-i", _fileName, "-r", "10", "-b:v", "300k", "-b:a", "8k", "-bt", "10k", "-vcodec", "libx264", "-coder", "0", "-bf", "0", "-timeout", "1", "-flags", "-loop", "-wpredp", "0", "-an", "-preset:v", "ultrafast", "-tune", "zerolatency","-level:v", "5.2", "-f", "h264", "pipe:1"];
+        var params = ["-y", "-i", _fileName + ' live=1', "-loglevel", avLog.quiet, "-r", "10", "-b:v", "300k", "-b:a", "8k", "-bt", "10k", "-vcodec", "libx264", "-coder", "0", "-bf", "0", "-timeout", "1", "-flags", "-loop", "-wpredp", "0", "-an", "-preset:v", "ultrafast", "-tune", "zerolatency","-level:v", "5.2", "-f", "h264", "pipe:1"];
         var fmParams = " " + (params.toString()).replace(/[,]/g, " ");
         console.log("ffmpeg " + fmParams);
 
@@ -87,8 +96,8 @@ function FxOutdevs(fileName) {
         };
 
         var stderrDataHanlder = function (buf) {
-            //var str = String(buf);
-            //console.log('[INFO] stderr info::', str);
+            var str = String(buf);
+            console.log('[INFO] stderr info::', str);
             //  1. Network is unreachable
             //  2. Cannot open connection
         };
@@ -96,12 +105,13 @@ function FxOutdevs(fileName) {
         var stdoutCloseHandler = function(code) {
             console.log(self.name + ' you are terminated.');
             logger.debug("[Close] close_event - Child process exited with code " + code);
-            self.emit('close');
+            self.emit('close', code);
             self.running = false;
             self.STATUS = stdoutStatus.CLOSE;
         };
         var stdoutExitHandler = function() {
             console.log('[Debug] Hasta la vista, baby!');
+            self.emit('exit');
             self.running = false;
             logger.debug("[Exit] Exit_event - Child process exited ");
         };

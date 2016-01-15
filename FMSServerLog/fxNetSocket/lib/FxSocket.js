@@ -36,9 +36,13 @@ FxSocket.prototype.handeshake = function (chunk) {
 
 FxSocket.prototype.write = function (data) {
     if (this.mode === 'ws') {
+
         this.socket.write(emit_websocket(data));
     }else if (this.mode === 'flashsocket') {
         //emit_flashsocket(data);
+    }else
+    {
+        this.socket.write(data);
     }
 
 };
@@ -81,6 +85,7 @@ FxSocket.prototype.readByteArray = function(data) {
 };
 
 FxSocket.prototype.close = function () {
+    console.log('socket destroy :', this.name);
     this.socket.destroy();
 };
 

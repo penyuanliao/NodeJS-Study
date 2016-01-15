@@ -42,13 +42,18 @@ logger.prototype.pollingWithProcess = function(proc, name, delay) {
         if (typeof proc != 'undefined' && (proc !== null) && proc !== "") {
 
             if (parseInt(proc.exitCode) === 255) {
-                console.log("[Polling] ffmpeg " + name + " process to Shutdown. (use kill PID) -proc.exitCode=" + proc.exitCode + " -proc.killed=" + proc.killed + " -proc.signalCode=" + proc.signalCode);
+                console.log("[Polling-255] ffmpeg " + name + " process to Shutdown. (use kill -15 PID) -proc.exitCode=" + proc.exitCode + " -proc.killed=" + proc.killed + " -proc.signalCode=" + proc.signalCode);
                 logger.instance.debug("[Polling] ffmpeg " + name + " process to Shutdown. (use kill -15 PID) -proc.exitCode=" + proc.exitCode + " -proc.killed=" + proc.killed + " -proc.signalCode=" + proc.signalCode);
             }else if (proc.signalCode === "SIGKILL") {
-                console.log("[Polling] ffmpeg " + name + " process to Shutdown. (use kill -9 PID) -proc.exitCode=" + proc.exitCode + " -proc.killed=" + proc.killed + " -proc.signalCode=" + proc.signalCode);
-                logger.instance.debug("[Polling] ffmpeg " + name + " process to Shutdown. (use kill -9 PID) -proc.exitCode=" + proc.exitCode + " -proc.killed=" + proc.killed + " -proc.signalCode=" + proc.signalCode);
+                console.log("[Polling-sigkill] ffmpeg " + name + " process to Shutdown. (use kill -9 PID) -proc.exitCode=" + proc.exitCode + " -proc.killed=" + proc.killed + " -proc.signalCode=" + proc.signalCode);
+                logger.instance.debug("[Polling-sigkill] ffmpeg " + name + " process to Shutdown. (use kill -9 PID) -proc.exitCode=" + proc.exitCode + " -proc.killed=" + proc.killed + " -proc.signalCode=" + proc.signalCode);
+            }
+            else if (parseInt(proc.exitCode) === 0) {
+                    console.log("[Polling-0] ffmpeg " + name + " process to Shutdown. (use kill -9 PID) -proc.exitCode=" + proc.exitCode + " -proc.killed=" + proc.killed + " -proc.signalCode=" + proc.signalCode);
+                    logger.instance.debug("[Polling-0] ffmpeg " + name + " process to Shutdown. (use kill -9 PID) -proc.exitCode=" + proc.exitCode + " -proc.killed=" + proc.killed + " -proc.signalCode=" + proc.signalCode);
+
             }else {
-                console.log("[Polling] ffmpeg " + name + " process to Working." + " -proc.exitCode=" + proc.exitCode + " -proc.killed=" + proc.killed + " -proc.signalCode=" + proc.signalCode);
+                console.log("[Polling-log] ffmpeg " + name + " process to Working." + " -proc.exitCode=" + proc.exitCode + " -proc.killed=" + proc.killed + " -proc.signalCode=" + proc.signalCode);
             }
 
         }

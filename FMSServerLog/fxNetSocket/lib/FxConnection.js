@@ -59,7 +59,7 @@ function FxConnection(port, option){
                 client.isConnect = true;
                 addUpdateData(mode);
                 console.log("[INFO] Add client mode:",client.mode);
-                clients[client.name] = client;
+                clients[client.name] = client; //TODO 二維分組namespace物件
             } else {
 
                 //var http = data.toString('utf8');
@@ -80,7 +80,7 @@ function FxConnection(port, option){
                 if (mode === fxStatus.websocket) {
                     var obj = client.read(chunk);
                     data = obj.msg;
-                    if(obj.opcode == 8)socket.emit("close");
+                    if(obj.opcode == 8) client.close(); //被動關閉回傳事件
                 }
 
                 self.emit("message", data);
@@ -185,11 +185,11 @@ var findOutSocketConnected = function (client, chunk, self) {
 
         if (typeof httpTag[0] != "undefined") client.namespace = httpTag[1]; // GET stream namespace
 
-        self.emit('connection', client); //
-
         client.handeshake(chunk);
         // -- WELCOME TO BENSON WEBSOCKET SOCKET SERVER -- //
         client.write(JSON.stringify({"NetStatusEvent": "NetConnect.Success"}));
+
+        self.emit('connection', client); //
 
         return fxStatus.websocket;
     }
