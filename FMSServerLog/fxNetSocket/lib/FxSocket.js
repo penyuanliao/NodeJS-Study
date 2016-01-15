@@ -53,16 +53,23 @@ FxSocket.prototype.read = function (data) {
 
         NSLog(1,'ws-opcode: ' + this.protocol.opcode );
 
+        var obj = {opcode:opcode};
+
         if (opcode === 1){
-            return this.protocol['msg'];
+            obj.msg = this.protocol['msg']
         }else if (opcode === 2){
-            var byte2str = this.protocol['msg'].toString('utf8');
+            obj.msg = this.protocol['msg'].toString('utf8');
+        }else if (opcode === 8){
+            // 0x8 denotes a connection close
+            obj.msg = "close";
         }
         // opcode 0x01 Text
         // opcode 0x02 ByteArray
-        // TODO opcode 0x08 frame client destory ws
+        // opcode 0x08 frame client destory ws
         // TODO opcode 0x09 frame Pring control frame
         // TODO opcode 0x0A frame Pong control frame
+
+        return obj;
     }
 };
 

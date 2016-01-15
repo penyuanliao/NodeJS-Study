@@ -78,7 +78,9 @@ function FxConnection(port, option){
                 var data = chunk;
 
                 if (mode === fxStatus.websocket) {
-                    data = client.read(chunk);
+                    var obj = client.read(chunk);
+                    data = obj.msg;
+                    if(obj.opcode == 8)socket.emit("close");
                 }
 
                 self.emit("message", data);
@@ -93,14 +95,13 @@ function FxConnection(port, option){
     });
 
     function sockDidClosed() {
-        console.log('LOG::SOCKET CLOSED');
+        console.log('LOG::SOCKET WILL CLOSED : COUNT(%d)',Object.keys(clients).length -1);
 
         var socket = this;
         var index = clients.indexOf(socket.name);
         var removeItem;
         if (index > -1) removeItem = index.splice(index, 1);
         delete clients[socket.name];
-
         self.emit('disconnect', removeItem);
 
     };
