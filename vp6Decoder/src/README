@@ -1,0 +1,9 @@
+
+Emscripten build version
+```
+emcc (Emscripten GCC-like replacement + linker emulating GNU ld ) 1.29.0 or 1.35.0
+clang version 3.4 
+Target: x86_64-apple-darwin14.5.0
+Thread model: posix
+```
+
